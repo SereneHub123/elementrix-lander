@@ -1,0 +1,17 @@
+{
+  "name": "Elementrix — Avatar Bending Minecraft SMP",
+  "short_name": "Elementrix",
+  "description": "Avatar-inspired Minecraft bending SMP for Java and Bedrock. Pick your element, earn your power.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0D0E13",
+  "theme_color": "#0D0E13",
+  "icons": [
+    {
+      "src": "media/em.png",
+      "sizes": "335x335",
+      "type": "image/png"
+    }
+  ]
+}
