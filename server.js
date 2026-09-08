@@ -133,6 +133,9 @@ app.get('/api/status', (req, res) => {
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
+// UptimeRobot-friendly health check: GET /health -> 200 "ok" (plain text).
+app.get('/health', (req, res) => res.type('text').send('ok'));
+
 // Live tierlist, proxied so the frontend never hits CORS issues and the
 // tiers site being down degrades gracefully (frontend keeps its mock).
 // Shape returned: [{username, tier, element, notes}] from /api/v1/tiers.
