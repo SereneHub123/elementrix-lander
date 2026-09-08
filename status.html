@@ -3,25 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>404, Lost in the Spirit World | Elementrix</title>
-<meta name="description" content="This chunk isn't loaded. Head back to the Elementrix Minecraft bending SMP, Java & Bedrock at elementrix.xyz.">
-<meta name="robots" content="noindex, follow">
+<title>Server Status | Elementrix Bending SMP</title>
+<meta name="description" content="Live Elementrix Minecraft server status for Java & Bedrock, online state, player count and real 30-day uptime at elementrix.xyz.">
+<link rel="canonical" href="https://elementrix.xyz/status">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta name="author" content="Elementrix">
 <meta name="theme-color" content="#0D0E13">
 <meta name="color-scheme" content="dark">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Elementrix">
 <meta property="og:locale" content="en_US">
-<meta property="og:url" content="https://elementrix.xyz/404.html">
-<meta property="og:title" content="404, Lost in the Spirit World | Elementrix">
-<meta property="og:description" content="This chunk isn't loaded. Head back to spawn, elementrix.xyz.">
+<meta property="og:url" content="https://elementrix.xyz/status">
+<meta property="og:title" content="Server Status | Elementrix Bending SMP">
+<meta property="og:description" content="Is the realm awake? Live player count and real uptime for the Elementrix Minecraft bending SMP.">
 <meta property="og:image" content="https://elementrix.xyz/media/bg.webp">
 <meta property="og:image:width" content="1080">
 <meta property="og:image:height" content="452">
 <meta property="og:image:alt" content="Elementrix Minecraft bending SMP panorama at night">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="404, Lost in the Spirit World | Elementrix">
-<meta name="twitter:description" content="This chunk isn't loaded. Head back to spawn, elementrix.xyz.">
+<meta name="twitter:title" content="Server Status | Elementrix Bending SMP">
+<meta name="twitter:description" content="Live player count and real uptime for the Elementrix Minecraft bending SMP.">
 <meta name="twitter:image" content="https://elementrix.xyz/media/bg.webp">
 <link rel="icon" type="image/png" href="media/em.png">
 <link rel="apple-touch-icon" href="media/em.png">
@@ -30,24 +31,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<style>
-/* 404-only: giant blocky code reusing theme tokens, no new system */
-.miss{font-family:var(--font-p);font-size:11px;letter-spacing:.18em;color:#C9CDD8;margin:14px auto 0;text-shadow:2px 2px 0 rgba(0,0,0,.85)}
-.miss code{font-size:11px;background:#000;border:2px solid #333949;color:var(--gold);padding:2px 6px;word-break:break-all}
-</style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="nav">
   <div class="nav-inner">
-    <a class="brandmini" href="index.html" aria-label="Elementrix home">
+    <a class="brandmini" href="index.html#top" aria-label="Elementrix home">
       <img src="media/em.png" alt="Elementrix Minecraft server logo" width="40" height="40" fetchpriority="high" decoding="async">
       <span class="bt"><b>ELEMENTRIX</b><span>BENDING SMP</span></span>
     </a>
     <button class="burger" id="burger" aria-expanded="false" aria-controls="navlinks">MENU</button>
     <nav class="nav-links" id="navlinks" aria-label="Primary">
-      <a href="index.html">Home</a>
+      <a href="index.html#top">Home</a>
       <a href="index.html#elements">Elements</a>
       <a href="index.html#tiers">Tierlist</a>
       <a href="index.html#join">How to Play</a>
@@ -59,19 +55,54 @@
 </header>
 
 <main id="main">
-<section class="hero" aria-label="Page not found">
+<section class="hero" aria-label="Server status">
 <canvas id="stars" aria-hidden="true"></canvas>
 <div class="hero-inner">
-  <span class="kicker" style="--kb:#8B5CFF;background:rgba(255,255,255,.38);color:#111;backdrop-filter:blur(8px)">ERROR 404 // SPIRIT WORLD</span>
-  <h1 class="tagline">404 - You are lost!<br><a href="index.html" style="color:var(--gold)">Return to home</a></h1>
-  <p class="miss" id="missline">MISSING CHUNK: <code id="missurl">/unknown</code></p>
+  <span class="kicker" style="--kb:#3DFF7A;background:rgba(255,255,255,.38);color:#111;backdrop-filter:blur(8px)">LIVE STATUS</span>
+  <h1 class="tagline">Is the realm awake?</h1>
+  <p class="sub">View real-time status of the Elementrix minecraft server.</p>
   <div class="hero-cta">
-    <a class="btn hero-learn dark" href="index.html">← BACK TO SPAWN</a>
     <button class="btn hero-copy gold" data-copy="elementrix.xyz" data-label="Java IP">⛏&nbsp; COPY IP</button>
     <a class="btn hero-learn dark" href="index.html#join">HOW TO JOIN ↓</a>
   </div>
-  <p class="bedrock-note">ON BEDROCK? SAME ADDRESS, PORT <b>25506</b></p>
-  <div class="scrollhint"><span>▲</span>&nbsp;&nbsp;RESPAWN ABOVE&nbsp;&nbsp;<span>▲</span></div>
+  <div class="scrollhint"><span>▼</span>&nbsp;&nbsp;SCROLL FOR THE NUMBERS&nbsp;&nbsp;<span>▼</span></div>
+</div>
+</section>
+
+<section class="section" id="live" aria-label="Live server numbers">
+<div class="wrap">
+  <div class="status-card rv in" id="scard">
+    <div class="st-top">
+      <span class="stdot wait" id="stDot" aria-hidden="true"></span>
+      <div class="st-head">
+        <div class="st-state" id="stState">CHECKING…</div>
+        <div class="st-sub">JAVA, ELEMENTRIX.XYZ</div>
+      </div>
+      <button class="btn small dark" id="stRefresh" title="Refresh now">↻ REFRESH</button>
+    </div>
+    <div class="st-grid">
+      <div class="st-cell">
+        <span>PLAYERS ONLINE</span>
+        <b id="stPlayers">,</b>
+        <div class="bar" aria-hidden="true"><i id="stBar" style="width:0%"></i></div>
+        <small id="stCap">asking the server…</small>
+      </div>
+      <div class="st-cell">
+        <span>UPTIME · 30 DAYS</span>
+        <b id="stUptime">,</b>
+        <div class="bar" aria-hidden="true"><i id="stUbar" style="width:0%"></i></div>
+        <small id="stSince">tracking…</small>
+      </div>
+      <div class="st-cell">
+        <span>VERSION</span>
+        <b class="st-ver" id="stVer">,</b>
+      </div>
+    </div>
+    <div class="st-foot">
+      <span id="stTime">LAST CHECKED ,</span>
+      <span>BEDROCK, ELEMENTRIX.XYZ : 25506</span>
+    </div>
+  </div>
 </div>
 </section>
 </main>
@@ -110,7 +141,6 @@
 <script>
 (function(){
   var yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear();
-  try{ document.getElementById('missurl').textContent = location.pathname + location.search || '/unknown'; }catch(e){}
 
   /* mobile nav */
   var burger=document.getElementById('burger'), links=document.getElementById('navlinks');
@@ -140,6 +170,58 @@
   document.querySelectorAll('[data-copy]').forEach(function(b){
     b.addEventListener('click',function(){copyText(b.getAttribute('data-copy'),b.getAttribute('data-label')||'IP')});
   });
+
+  /* ===== live status card ===== */
+  var dot=document.getElementById('stDot'), state=document.getElementById('stState'),
+      players=document.getElementById('stPlayers'), bar=document.getElementById('stBar'),
+      cap=document.getElementById('stCap'), up=document.getElementById('stUptime'),
+      ubar=document.getElementById('stUbar'), since=document.getElementById('stSince'),
+      ver=document.getElementById('stVer'),
+      time=document.getElementById('stTime'), refresh=document.getElementById('stRefresh');
+
+  function fmtTime(iso){
+    try{ return new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+    catch(e){ return ','; }
+  }
+
+  function render(d){
+    if(d.online){
+      dot.className='stdot on'; state.textContent='ONLINE';
+      players.textContent=d.players.online+' / '+d.players.max;
+      var pct=d.players.max>0?Math.min(100,Math.round(d.players.online/d.players.max*100)):0;
+      bar.style.width=pct+'%';
+      cap.textContent=d.players.online===1?'1 bender in the realm':d.players.online+' benders in the realm';
+      ver.textContent=d.version||',';
+    } else {
+      dot.className='stdot off'; state.textContent='OFFLINE';
+      players.textContent='0'; bar.style.width='0%';
+      cap.textContent=d.error||'server unreachable, retrying';
+      ver.textContent=',';
+    }
+    if(d.uptime&&(d.uptime.pct30d===0||d.uptime.pct30d)){
+      up.textContent=d.uptime.pct30d+'%';
+      ubar.style.width=d.uptime.pct30d+'%';
+      since.textContent=d.uptime.checks+' checks'+(d.uptime.trackingSince?' · since '+new Date(d.uptime.trackingSince).toLocaleDateString():'');
+    } else {
+      up.textContent=','; ubar.style.width='0%';
+      since.textContent='collecting data…';
+    }
+    time.textContent='LAST CHECKED '+(d.lastChecked?fmtTime(d.lastChecked):',');
+  }
+
+  var loading=false;
+  function check(){
+    if(loading)return; loading=true;
+    var ctl=new AbortController(); var to=setTimeout(function(){ctl.abort()},12000);
+    fetch('/api/status',{signal:ctl.signal,cache:'no-store'})
+      .then(function(r){ if(!r.ok)throw new Error('bad '+r.status); return r.json(); })
+      .then(render)
+      .catch(function(){ dot.className='stdot off'; state.textContent='UNKNOWN'; cap.textContent='status backend unreachable, is the site server running?'; })
+      .finally(function(){ clearTimeout(to); loading=false; });
+  }
+  refresh.addEventListener('click',check);
+  check();
+  setInterval(check,30000);
 
   /* hero embers, same palette as index */
   var PALETTE=['#E45A1F','#2FB9D4','#7AA53A','#D6F4FF','#FFC93C','#8B5CFF'];
