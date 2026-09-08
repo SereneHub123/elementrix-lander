@@ -160,6 +160,14 @@ app.get('/api/tiers', async (req, res) => {
   }
 });
 
+// Anything unmatched serves the themed 404 page (unknown API paths get JSON).
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'not found' });
+  }
+  res.status(404).sendFile(path.join(__dirname, '404.html'));
+});
+
 poll();
 setInterval(poll, POLL_MS);
 
