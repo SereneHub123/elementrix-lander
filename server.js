@@ -107,8 +107,10 @@ app.use(['/data', '/server.js', '/package.json', '/package-lock.json', '/node_mo
 // consolidate ranking signals on the canonical (extensionless) URL.
 app.get('/rules.html', (req, res) => res.redirect(301, '/rules'));
 app.get('/status.html', (req, res) => res.redirect(301, '/status'));
+app.get('/event.html', (req, res) => res.redirect(301, '/event'));
 app.get('/rules', (req, res) => res.sendFile(path.join(__dirname, 'rules.html')));
 app.get('/status', (req, res) => res.sendFile(path.join(__dirname, 'status.html')));
+app.get('/event', (req, res) => res.sendFile(path.join(__dirname, 'event.html')));
 
 app.use(express.static(__dirname));
 
