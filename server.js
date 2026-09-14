@@ -233,6 +233,9 @@ app.get('/api/analytics', (req, res) => {
   const avgSessionSec = inRange.length
     ? Math.round(inRange.reduce((a, s) => a + s.dur, 0) / inRange.length)
     : null;
+  const avgPlayers = samples.length
+    ? Math.round((samples.reduce((a, s) => a + s.n, 0) / samples.length) * 10) / 10
+    : null;
 
   const last = analytics.samples[analytics.samples.length - 1] || null;
   res.json({
@@ -240,6 +243,7 @@ app.get('/api/analytics', (req, res) => {
     points,
     peak: analytics.peak.n > 0 ? analytics.peak : null,
     avgSessionSec,
+    avgPlayers,
     sessions: inRange.length,
     now: last ? { n: last.n, t: last.t } : null,
   });

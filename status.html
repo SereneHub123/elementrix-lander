@@ -122,11 +122,16 @@
       <canvas id="graph" height="220" aria-label="Players online over time"></canvas>
       <div class="graphmsg" id="graphMsg">LOADING HISTORY,</div>
     </div>
-    <div class="st-grid">
+    <div class="st-grid two">
       <div class="st-cell">
         <span>PEAK, ALL TIME</span>
         <b id="gPeak">,</b>
         <small id="gPeakT">no data yet</small>
+      </div>
+      <div class="st-cell">
+        <span>AVG PLAYERS</span>
+        <b id="gAvgP">,</b>
+        <small>concurrent in range</small>
       </div>
       <div class="st-cell">
         <span>AVG SESSION</span>
@@ -336,6 +341,7 @@
         } else { gPeak.textContent=','; gPeakT.textContent='no data yet'; }
         gAvg.textContent=fmtDur(d.avgSessionSec);
         document.getElementById('gAvgT').textContent=d.sessions!=null?(d.sessions+' sessions in range'):'in selected range';
+        document.getElementById('gAvgP').textContent=(d.avgPlayers==null||d.avgPlayers===undefined)?',':(d.avgPlayers+' ONLINE');
         if(d.now){ gNow.textContent=d.now.n+' ONLINE'; }
         else { gNow.textContent=','; }
       })
