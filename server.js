@@ -17,6 +17,29 @@ const TIERS_API_BASE = process.env.TIERS_API_BASE || 'https://tiers.elementrix.x
 const TIERS_CACHE_MS = parseInt(process.env.TIERS_CACHE_MS || '60000', 10);
 let tiersCache = { at: 0, data: null };
 
+// ---------- player analytics (pushed by the MC plugin) ----------
+const ANALYTICS_SECRET = process.env.ANALYTICS_SECRET || null;
+const ANALYTICS_FILE = path.join(__dirname, 'data', 'analytics.json');
+const ANALYTICS_RETENTION_MS = 95 * 864e5;
+let analytics = { samples: [], sessions: [], peak: { n: 0, t: null } };
+try {
+  const raw = JSON.parse(fs.readFileSync(ANALYTICS_FILE, 'utf8'));
+  if (raw && Array.isArray(raw.samples)) analytics = raw;
+} catch (e) { /* first run */ }
+if (!Array.isArray(analytics.sessions)) analytics.sessions = [];
+if (!analytics.peak) analytics.peak = { n: 0, t: null };
+
+let analyticsSaveTimer = null;
+function saveAnalytics() {
+  if (analyticsSaveTimer) return;
+  analyticsSaveTimer = setTimeout(() => {
+    analyticsSaveTimer = null;
+    fs.mkdir(path.dirname(ANALYTICS_FILE), { recursive: true }, () => {
+      fs.writeFile(ANALYTICS_FILE, JSON.stringify(analytics), () => {});
+    });
+  }, 2000);
+}
+
 // ---------- uptime store ----------
 let history = [];
 try {
@@ -102,6 +125,8 @@ const app = express();
 app.use(['/data', '/server.js', '/package.json', '/package-lock.json', '/node_modules'],
   (req, res) => res.status(403).end());
 
+app.use(express.json({ limit: '1mb' }));
+
 // Clean URLs: /rules + /status serve the pages, the old .html URLs
 // 301-redirect to them so bookmarks keep working and search engines
 // consolidate ranking signals on the canonical (extensionless) URL.
@@ -137,6 +162,88 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 // UptimeRobot-friendly health check: GET /health -> 200 "ok" (plain text).
 app.get('/health', (req, res) => res.type('text').send('ok'));
+
+// Player analytics, pushed by the ElementrixCore plugin (shared secret).
+// POST {secret, samples:[{id,ts,n}], sessions:[{id,uuid,name,join,quit,dur}]}
+app.post('/api/analytics/ingest', (req, res) => {
+  if (!ANALYTICS_SECRET) return res.status(503).json({ error: 'ingest not configured' });
+  const body = req.body || {};
+  if (body.secret !== ANALYTICS_SECRET) return res.status(403).json({ error: 'bad secret' });
+
+  const now = Date.now();
+  const cut = now - ANALYTICS_RETENTION_MS;
+  let addedSamples = 0, addedSessions = 0;
+
+  if (Array.isArray(body.samples)) {
+    const seen = new Set(analytics.samples.map((s) => s.t));
+    for (const s of body.samples) {
+      const t = Number(s.ts), n = Number(s.n);
+      if (!Number.isFinite(t) || !Number.isFinite(n) || t < cut || t > now + 36e5) continue;
+      if (seen.has(t)) continue;
+      seen.add(t);
+      analytics.samples.push({ t, n: Math.max(0, Math.round(n)) });
+      addedSamples++;
+    }
+  }
+  if (Array.isArray(body.sessions)) {
+    for (const s of body.sessions) {
+      const join = Number(s.join), quit = Number(s.quit), dur = Number(s.dur);
+      if (!Number.isFinite(join) || !Number.isFinite(quit) || quit < join || join < cut) continue;
+      if (analytics.sessions.some((x) => x.join === join && x.uuid === String(s.uuid || ''))) continue;
+      analytics.sessions.push({
+        uuid: String(s.uuid || '').slice(0, 40),
+        name: String(s.name || '').slice(0, 24),
+        join, quit, dur: Math.max(0, Math.round(Number.isFinite(dur) ? dur : (quit - join) / 1000)),
+      });
+      addedSessions++;
+    }
+  }
+
+  analytics.samples = analytics.samples.filter((s) => s.t >= cut).sort((a, b) => a.t - b.t);
+  if (analytics.samples.length > 30000) analytics.samples = analytics.samples.slice(-30000);
+  analytics.sessions = analytics.sessions.filter((s) => s.quit >= cut);
+  if (analytics.sessions.length > 20000) analytics.sessions = analytics.sessions.slice(-20000);
+
+  // All-time peak from samples.
+  for (const s of analytics.samples) {
+    if (s.n > analytics.peak.n) analytics.peak = { n: s.n, t: s.t };
+  }
+
+  saveAnalytics();
+  res.json({ received: true, addedSamples, addedSessions });
+});
+
+// Graph data: GET /api/analytics?range=7d|30d|90d
+// -> {points:[[ts,avgN],...], peak:{n,t}, avgSessionSec, now:{n,t}, samples}
+app.get('/api/analytics', (req, res) => {
+  const days = req.query.range === '30d' ? 30 : req.query.range === '90d' ? 90 : 7;
+  const cut = Date.now() - days * 864e5;
+  const samples = analytics.samples.filter((s) => s.t >= cut);
+
+  // Downsample into at most 200 buckets (average per bucket).
+  const buckets = Math.max(1, Math.ceil(samples.length / 200));
+  const points = [];
+  for (let i = 0; i < samples.length; i += buckets) {
+    const slice = samples.slice(i, i + buckets);
+    const avg = slice.reduce((a, s) => a + s.n, 0) / slice.length;
+    points.push([slice[Math.floor(slice.length / 2)].t, Math.round(avg * 10) / 10]);
+  }
+
+  const inRange = analytics.sessions.filter((s) => s.quit >= cut && s.dur > 0);
+  const avgSessionSec = inRange.length
+    ? Math.round(inRange.reduce((a, s) => a + s.dur, 0) / inRange.length)
+    : null;
+
+  const last = analytics.samples[analytics.samples.length - 1] || null;
+  res.json({
+    range: days + 'd',
+    points,
+    peak: analytics.peak.n > 0 ? analytics.peak : null,
+    avgSessionSec,
+    sessions: inRange.length,
+    now: last ? { n: last.n, t: last.t } : null,
+  });
+});
 
 // Live tierlist, proxied so the frontend never hits CORS issues and the
 // tiers site being down degrades gracefully (frontend keeps its mock).

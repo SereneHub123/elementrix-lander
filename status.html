@@ -105,6 +105,41 @@
       <span>BEDROCK, ELEMENTRIX.XYZ : 25506</span>
     </div>
   </div>
+
+  <div class="status-card rv" id="gcard" style="margin-top:22px">
+    <div class="st-top">
+      <div class="st-head">
+        <div class="st-state" style="font-size:clamp(19px,2.4vw,26px)">PLAYER HISTORY</div>
+        <div class="st-sub">SAMPLED EVERY 5 MINUTES BY THE SERVER</div>
+      </div>
+      <div class="rangebtns" role="group" aria-label="Graph range">
+        <button class="btn small dark rangebtn on" data-range="7d">7D</button>
+        <button class="btn small dark rangebtn" data-range="30d">30D</button>
+        <button class="btn small dark rangebtn" data-range="90d">90D</button>
+      </div>
+    </div>
+    <div class="graphwrap">
+      <canvas id="graph" height="220" aria-label="Players online over time"></canvas>
+      <div class="graphmsg" id="graphMsg">LOADING HISTORY,</div>
+    </div>
+    <div class="st-grid">
+      <div class="st-cell">
+        <span>PEAK, ALL TIME</span>
+        <b id="gPeak">,</b>
+        <small id="gPeakT">no data yet</small>
+      </div>
+      <div class="st-cell">
+        <span>AVG SESSION</span>
+        <b id="gAvg">,</b>
+        <small id="gAvgT">in selected range</small>
+      </div>
+      <div class="st-cell">
+        <span>RIGHT NOW</span>
+        <b id="gNow">,</b>
+        <small id="gNowT">live from the card above</small>
+      </div>
+    </div>
+  </div>
 </div>
 </section>
 </main>
@@ -225,6 +260,104 @@
   refresh.addEventListener('click',check);
   check();
   setInterval(check,30000);
+
+  /* ===== player history graph ===== */
+  var graph=document.getElementById('graph'), gmsg=document.getElementById('graphMsg'),
+      gPeak=document.getElementById('gPeak'), gPeakT=document.getElementById('gPeakT'),
+      gAvg=document.getElementById('gAvg'), gNow=document.getElementById('gNow'),
+      gRange='7d';
+
+  function fmtDur(sec){
+    if(sec==null)return ',';
+    sec=Math.round(sec);
+    var h=Math.floor(sec/3600), m=Math.round((sec%3600)/60);
+    if(h>0)return h+'H '+m+'M';
+    if(m>0)return m+'M';
+    return sec+'S';
+  }
+
+  function drawGraph(points){
+    var dpr=window.devicePixelRatio||1;
+    var W=graph.clientWidth, H=220;
+    graph.width=W*dpr; graph.height=H*dpr;
+    var ctx=graph.getContext('2d'); ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,W,H);
+    var padL=34, padR=10, padT=14, padB=22;
+    var iw=W-padL-padR, ih=H-padT-padB;
+    var max=Math.max.apply(null, points.map(function(p){return p[1]}).concat([10]));
+    max=Math.ceil(max/10)*10;
+    ctx.strokeStyle='#23262F'; ctx.lineWidth=1;
+    ctx.fillStyle='#6B7080'; ctx.font='9px Silkscreen, monospace';
+    for(var g=0; g<=4; g++){
+      var y=padT+ih-(ih*g/4);
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      ctx.fillText(String(Math.round(max*g/4)), 4, y+3);
+    }
+    if(points.length<2)return;
+    var t0=points[0][0], t1=points[points.length-1][0]||(t0+1);
+    function X(t){ return padL+iw*(t-t0)/Math.max(1,t1-t0); }
+    function Y(n){ return padT+ih-(ih*n/max); }
+    // area fill
+    var grad=ctx.createLinearGradient(0,padT,0,padT+ih);
+    grad.addColorStop(0,'rgba(255,201,60,.45)'); grad.addColorStop(1,'rgba(255,201,60,.03)');
+    ctx.beginPath(); ctx.moveTo(X(points[0][0]),Y(points[0][1]));
+    points.forEach(function(p){ ctx.lineTo(X(p[0]),Y(p[1])); });
+    ctx.lineTo(X(points[points.length-1][0]),padT+ih); ctx.lineTo(X(points[0][0]),padT+ih); ctx.closePath();
+    ctx.fillStyle=grad; ctx.fill();
+    // line
+    ctx.beginPath(); ctx.moveTo(X(points[0][0]),Y(points[0][1]));
+    points.forEach(function(p){ ctx.lineTo(X(p[0]),Y(p[1])); });
+    ctx.strokeStyle='#FFC93C'; ctx.lineWidth=3; ctx.joinStyle='miter'; ctx.stroke();
+    // endpoints labels
+    ctx.fillStyle='#9AA0B2';
+    ctx.fillText(new Date(t0).toLocaleDateString([], {month:'short',day:'numeric'}), padL, H-7);
+    var end=new Date(t1).toLocaleDateString([], {month:'short',day:'numeric'});
+    ctx.fillText(end, W-padR-ctx.measureText(end).width, H-7);
+  }
+
+  var gLoading=false;
+  function loadGraph(){
+    if(gLoading)return; gLoading=true;
+    gmsg.textContent='LOADING HISTORY,';
+    gmsg.classList.remove('hide');
+    var ctl=new AbortController(); var to=setTimeout(function(){ctl.abort()},12000);
+    fetch('/api/analytics?range='+gRange,{signal:ctl.signal,cache:'no-store'})
+      .then(function(r){ if(!r.ok)throw new Error('bad '+r.status); return r.json(); })
+      .then(function(d){
+        if(d.points&&d.points.length>=2){
+          gmsg.classList.add('hide');
+          drawGraph(d.points);
+        } else {
+          gmsg.textContent=d.points&&d.points.length?'NOT ENOUGH DATA YET,':'NO HISTORY YET, PLAY TO FILL IT.';
+        }
+        if(d.peak){
+          gPeak.textContent=d.peak.n+' ONLINE';
+          gPeakT.textContent='set '+new Date(d.peak.t).toLocaleString([], {month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        } else { gPeak.textContent=','; gPeakT.textContent='no data yet'; }
+        gAvg.textContent=fmtDur(d.avgSessionSec);
+        document.getElementById('gAvgT').textContent=d.sessions!=null?(d.sessions+' sessions in range'):'in selected range';
+        if(d.now){ gNow.textContent=d.now.n+' ONLINE'; }
+        else { gNow.textContent=','; }
+      })
+      .catch(function(){ gmsg.textContent='HISTORY UNREACHABLE,'; })
+      .finally(function(){ clearTimeout(to); gLoading=false; });
+  }
+  document.querySelectorAll('.rangebtn').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.rangebtn').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on'); gRange=b.getAttribute('data-range'); loadGraph();
+    });
+  });
+  loadGraph();
+  setInterval(loadGraph,120000);
+  addEventListener('resize',function(){
+    // redraw current range on resize (debounced by the interval otherwise)
+    if(gmsg.classList.contains('hide'))loadGraph();
+  });
+
+  /* ===== reveal on scroll ===== */
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
 
   /* hero embers, same palette as index */
   var PALETTE=['#E45A1F','#2FB9D4','#7AA53A','#D6F4FF','#FFC93C','#8B5CFF'];
