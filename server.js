@@ -18,7 +18,7 @@ const TIERS_CACHE_MS = parseInt(process.env.TIERS_CACHE_MS || '60000', 10);
 let tiersCache = { at: 0, data: null };
 
 // ---------- player analytics (pushed by the MC plugin) ----------
-const ANALYTICS_SECRET = process.env.ANALYTICS_SECRET || null;
+const ANALYTICS_SECRET = process.env.ANALYTICS_SECRET || 'ELEMENTRIXCORE';
 const ANALYTICS_FILE = path.join(__dirname, 'data', 'analytics.json');
 const ANALYTICS_RETENTION_MS = 95 * 864e5;
 let analytics = { samples: [], sessions: [], peak: { n: 0, t: null } };
